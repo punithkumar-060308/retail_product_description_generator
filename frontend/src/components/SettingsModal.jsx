@@ -21,7 +21,7 @@ export default function SettingsModal({ isOpen, onClose, health, onRefreshHealth
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: 16, borderRadius: 10, border: '1px solid var(--border-color)' }}>
+          <div style={{ background: 'var(--bg-input)', padding: 16, borderRadius: 10, border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <Server size={18} color="var(--accent-primary)" />
               <strong style={{ fontSize: 14 }}>Backend Status:</strong>
@@ -38,7 +38,7 @@ export default function SettingsModal({ isOpen, onClose, health, onRefreshHealth
             </p>
           </div>
 
-          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: 16, borderRadius: 10, border: '1px solid var(--border-color)' }}>
+          <div style={{ background: 'var(--bg-input)', padding: 16, borderRadius: 10, border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <Key size={18} color="var(--accent-purple)" />
               <strong style={{ fontSize: 14 }}>Generative AI Engine:</strong>
@@ -56,11 +56,11 @@ export default function SettingsModal({ isOpen, onClose, health, onRefreshHealth
           </div>
 
           <div style={{ background: 'rgba(99, 102, 241, 0.08)', padding: 14, borderRadius: 10, border: '1px dashed rgba(99, 102, 241, 0.3)' }}>
-            <h4 style={{ fontSize: 13, color: '#a5b4fc', marginBottom: 6 }}>
+            <h4 style={{ fontSize: 13, color: 'var(--accent-primary)', marginBottom: 6 }}>
               How to configure live Gemini API Key:
             </h4>
             <ol style={{ fontSize: 12, color: 'var(--text-muted)', paddingLeft: 18, lineHeight: 1.6 }}>
-              <li>Get a free Gemini API key from <a href="https://aistudio.google.com" target="_blank" rel="noreferrer" style={{ color: '#818cf8' }}>Google AI Studio</a>.</li>
+              <li>Get a free Gemini API key from <a href="https://aistudio.google.com" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-primary)' }}>Google AI Studio</a>.</li>
               <li>Create a <code>backend/.env</code> file with <code>GEMINI_API_KEY=your_key_here</code>.</li>
               <li>Restart the FastAPI backend. Keys are stored strictly on the backend and never exposed to the frontend.</li>
             </ol>
