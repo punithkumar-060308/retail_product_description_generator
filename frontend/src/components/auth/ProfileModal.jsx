@@ -142,7 +142,7 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onLo
         {!isEditing && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ 
-              background: 'rgba(15, 23, 42, 0.6)', 
+              background: 'var(--bg-input)', 
               borderRadius: 12, 
               padding: 18, 
               border: '1px solid var(--border-color)',
@@ -152,19 +152,19 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onLo
             }}>
               <div>
                 <span className="label-hint">Retailer Name</span>
-                <strong style={{ display: 'block', fontSize: 14, color: '#f8fafc' }}>{user.full_name}</strong>
+                <strong style={{ display: 'block', fontSize: 14, color: 'var(--text-main)' }}>{user.full_name}</strong>
               </div>
               <div>
                 <span className="label-hint">Login Email</span>
-                <strong style={{ display: 'block', fontSize: 14, color: '#cbd5e1' }}>{user.email}</strong>
+                <strong style={{ display: 'block', fontSize: 14, color: 'var(--text-muted)' }}>{user.email}</strong>
               </div>
               <div>
                 <span className="label-hint">Contact Phone</span>
-                <strong style={{ display: 'block', fontSize: 14, color: '#cbd5e1' }}>{user.phone}</strong>
+                <strong style={{ display: 'block', fontSize: 14, color: 'var(--text-muted)' }}>{user.phone}</strong>
               </div>
               <div>
                 <span className="label-hint">Organization</span>
-                <strong style={{ display: 'block', fontSize: 14, color: '#cbd5e1' }}>{user.organization || 'Individual Retailer'}</strong>
+                <strong style={{ display: 'block', fontSize: 14, color: 'var(--text-muted)' }}>{user.organization || 'Individual Retailer'}</strong>
               </div>
               <div>
                 <span className="label-hint">GSTIN</span>
@@ -174,13 +174,13 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onLo
               </div>
               <div>
                 <span className="label-hint">Default Copywriting Tone</span>
-                <strong style={{ display: 'block', fontSize: 14, color: '#818cf8' }}>
+                <strong style={{ display: 'block', fontSize: 14, color: 'var(--accent-primary)' }}>
                   {user.preferred_tone || 'Friendly'}
                 </strong>
               </div>
               <div style={{ gridColumn: 'span 2' }}>
                 <span className="label-hint">Store Location &amp; Address</span>
-                <span style={{ display: 'block', fontSize: 13, color: '#cbd5e1' }}>
+                <span style={{ display: 'block', fontSize: 13, color: 'var(--text-muted)' }}>
                   {[user.address_line, user.city, user.state, user.pincode].filter(Boolean).join(', ') || 'No address specified'}
                 </span>
               </div>

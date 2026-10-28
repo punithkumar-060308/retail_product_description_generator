@@ -245,7 +245,7 @@ export default function BulkBatchProcessor() {
           <div className="dropzone-icon">
             <UploadCloud size={36} />
           </div>
-          <strong style={{ fontSize: 14, color: '#e2e8f0', display: 'block', marginBottom: 4 }}>
+          <strong style={{ fontSize: 14, color: 'var(--text-main)', display: 'block', marginBottom: 4 }}>
             {selectedFile ? selectedFile.name : 'Click or drop a CSV catalog here'}
           </strong>
           <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>
@@ -323,7 +323,7 @@ export default function BulkBatchProcessor() {
           <div className="metrics-row">
             <div className="metric-card">
               <span className="metric-label">Total Catalog Rows</span>
-              <div className="metric-value" style={{ color: '#818cf8' }}>
+              <div className="metric-value" style={{ color: 'var(--accent-primary)' }}>
                 {batchResult.total_rows}
               </div>
               <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>Input rows read</span>
@@ -430,7 +430,7 @@ export default function BulkBatchProcessor() {
                       <code style={{ color: '#818cf8', fontSize: 11 }}>{item.product_id || `P${idx + 1}`}</code>
                     </td>
                     <td>
-                      <strong style={{ color: '#f8fafc', fontSize: 13 }}>{item.name}</strong>
+                      <strong style={{ color: 'var(--text-main)', fontSize: 13 }}>{item.name}</strong>
                     </td>
                     <td>
                       <span className="preset-chip" style={{ fontSize: 11, padding: '2px 8px' }}>
@@ -438,7 +438,7 @@ export default function BulkBatchProcessor() {
                       </span>
                     </td>
                     <td>
-                      <span style={{ fontSize: 12, color: '#cbd5e1' }}>{item.tone}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{item.tone}</span>
                     </td>
                     <td style={{ maxWidth: 260 }}>
                       <div

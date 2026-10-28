@@ -1,7 +1,7 @@
 import React from 'react';
-import { Sparkles, Settings, Store, UserCheck, LogIn, UserPlus } from 'lucide-react';
+import { Sparkles, Settings, Store, LogIn, Moon, Sun } from 'lucide-react';
 
-export default function Header({ health, onOpenSettings, currentUser, onOpenAuth, onOpenProfile }) {
+export default function Header({ health, onOpenSettings, currentUser, onOpenAuth, onOpenProfile, theme, onToggleTheme }) {
   const isHealthy = health?.status === 'healthy';
   const isLlm = health?.llm_configured;
 
@@ -30,8 +30,8 @@ export default function Header({ health, onOpenSettings, currentUser, onOpenAuth
             style={{ borderColor: 'rgba(99, 102, 241, 0.4)', background: 'rgba(99, 102, 241, 0.12)' }}
           >
             <Store size={15} color="var(--accent-primary)" />
-            <span style={{ color: '#fff', fontWeight: 600 }}>{currentUser.shop_name}</span>
-            <span style={{ fontSize: 11, color: '#a5b4fc' }}>({currentUser.full_name})</span>
+            <span className="account-shop-name">{currentUser.shop_name}</span>
+            <span className="account-user-name">({currentUser.full_name})</span>
           </button>
         ) : (
           <button
@@ -57,6 +57,16 @@ export default function Header({ health, onOpenSettings, currentUser, onOpenAuth
           </span>
           <Settings size={14} style={{ color: 'var(--text-dim)', marginLeft: 4 }} />
         </div>
+        <button
+          type="button"
+          className="theme-toggle"
+          onClick={onToggleTheme}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'night'} mode`}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'night'} mode`}
+        >
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          <span>{theme === 'dark' ? 'Light mode' : 'Night mode'}</span>
+        </button>
       </div>
     </header>
   );
