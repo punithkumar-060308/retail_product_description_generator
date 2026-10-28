@@ -1,5 +1,6 @@
 /**
  * API client service for communicating with the FastAPI backend.
+ * Includes Product Generation, Catalog Batch, Quality Feedback, and Retailer Authentication endpoints.
  */
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
@@ -99,4 +100,103 @@ export async function fetchFeedbackList() {
   } catch {
     return [];
   }
+}
+
+/* ==========================================================================
+   Retailer Authentication & Profile Services (user_account_creation_implementation.md)
+   ========================================================================== */
+
+export async function registerUser(registrationData) {
+  const res = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(registrationData),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail || `Registration failed (${res.status})`);
+  }
+  return await res.json();
+}
+
+export async function loginUser(credentials) {
+  const res = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail || `Login failed (${res.status})`);
+  }
+  return await res.json();
+}
+
+export async function fetchUserProfile(token) {
+  const res = await fetch(`${API_BASE_URL}/auth/me`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail || `Failed to fetch profile (${res.status})`);
+  }
+  return await res.json();
+}
+
+export async function updateUserProfile(profileUpdates, token) {
+  const res = await fetch(`${API_BASE_URL}/auth/me`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(profileUpdates),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail || `Failed to update profile (${res.status})`);
+  }
+  return await res.json();
+}
+
+// Session persistence helpers
+export function getStoredToken() {
+  return localStorage.getItem('retailer_auth_token');
+}
+
+export function setStoredToken(token) {
+  if (token) {
+    localStorage.setItem('retailer_auth_token', token);
+  } else {
+    localStorage.removeItem('retailer_auth_token');
+  }
+}
+
+export function getStoredUser() {
+  const data = localStorage.getItem('retailer_user_data');
+  try {
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredUser(user) {
+  if (user) {
+    localStorage.setItem('retailer_user_data', JSON.stringify(user));
+  } else {
+    localStorage.removeItem('retailer_user_data');
+  }
+}
+
+export function clearStoredAuth() {
+  localStorage.removeItem('retailer_auth_token');
+  localStorage.removeItem('retailer_user_data');
 }

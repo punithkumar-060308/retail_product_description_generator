@@ -13,7 +13,12 @@ from fastapi.middleware.cors import CORSMiddleware
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
+from .db.database import Base, engine
 from .api.routes import router
+from .api.auth_routes import auth_router
+
+# Create database tables automatically
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Retail Product Description Generator API",
@@ -30,8 +35,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount API router
+# Mount API routers
 app.include_router(router)
+app.include_router(auth_router)
 
 
 if __name__ == "__main__":

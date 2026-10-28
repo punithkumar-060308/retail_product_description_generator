@@ -1,4 +1,4 @@
-# CopyForge AI — Retail Product Description Generator
+# Descripto AI — Retail Product Description Generator
 
 > **TCS Technology Day Project**  
 > An enterprise-grade, grounded Generative AI studio that transforms structured retail product attributes into high-converting, tone-calibrated, and SEO-optimized product copy at scale.

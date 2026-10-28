@@ -2,37 +2,77 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, Layers, Award, BookOpen } from 'lucide-react';
 import Header from './components/Header';
 import SettingsModal from './components/SettingsModal';
+import AuthModal from './components/auth/AuthModal';
+import ProfileModal from './components/auth/ProfileModal';
 import SingleProductStudio from './components/SingleProductStudio';
 import BulkBatchProcessor from './components/BulkBatchProcessor';
-// import QualityRubricView from './components/QualityRubricView';
 import DocsArchitectureView from './components/DocsArchitectureView';
-import { fetchHealth } from './services/api';
+import { 
+  fetchHealth, 
+  getStoredUser, 
+  getStoredToken, 
+  fetchUserProfile, 
+  setStoredUser, 
+  clearStoredAuth 
+} from './services/api';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('single');
   const [health, setHealth] = useState(null);
+  const [currentUser, setCurrentUser] = useState(getStoredUser());
+
+  // Modal dialog states
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const checkHealth = async () => {
     const data = await fetchHealth();
     setHealth(data);
   };
 
+  // Sync session on mount
   useEffect(() => {
     checkHealth();
-    const interval = setInterval(checkHealth, 20000);
+    const token = getStoredToken();
+    if (token) {
+      fetchUserProfile(token)
+        .then((userData) => {
+          setCurrentUser(userData);
+          setStoredUser(userData);
+        })
+        .catch(() => {
+          // Token invalid or expired
+          clearStoredAuth();
+          setCurrentUser(null);
+        });
+    }
+
+    const interval = setInterval(checkHealth, 25000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleAuthSuccess = (user) => {
+    setCurrentUser(user);
+  };
+
+  const handleLogout = () => {
+    clearStoredAuth();
+    setCurrentUser(null);
+  };
 
   return (
     <div className="app-container">
       {/* Top Header */}
       <Header
         health={health}
+        currentUser={currentUser}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenProfile={() => setIsProfileOpen(true)}
       />
 
-      {/* Navigation Tabs */}
+      {/* Navigation Tabs (Centered via CSS) */}
       <nav className="nav-tabs">
         <button
           type="button"
@@ -53,18 +93,6 @@ export default function App() {
           <span className="tab-badge">55 Demo Ready</span>
         </button>
 
-        {/* <button
-          type="button"
-          className={`tab-btn ${activeTab === 'rubric' ? 'active' : ''}`}
-          onClick={() => setActiveTab('rubric')}
-        >
-          {/* <Award size={16} />
-          Quality  &amp; Evaluation
-          <span className="tab-badge" style={{ background: 'rgba(16,185,129,0.3)', color: '#a7f3d0' }}>
-            85% Target
-          </span> 
-        </button> */}
-
         <button
           type="button"
           className={`tab-btn ${activeTab === 'docs' ? 'active' : ''}`}
@@ -78,19 +106,37 @@ export default function App() {
       {/* Main Content Body */}
       <main>
         {activeTab === 'single' && (
-          <SingleProductStudio onFeedbackSubmitted={checkHealth} />
+          <SingleProductStudio 
+            onFeedbackSubmitted={checkHealth}
+            currentUser={currentUser}
+          />
         )}
         {activeTab === 'bulk' && <BulkBatchProcessor />}
-        {/* {activeTab === 'rubric' && <QualityRubricView />} */}
         {activeTab === 'docs' && <DocsArchitectureView />}
       </main>
 
-      {/* Settings Modal */}
+      {/* Provider & Server Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         health={health}
         onRefreshHealth={checkHealth}
+      />
+
+      {/* Retailer Authentication Modal (Sign In / Register) */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
+
+      {/* Retailer Business Profile Modal */}
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        user={currentUser}
+        onUpdateUser={(updated) => setCurrentUser(updated)}
+        onLogout={handleLogout}
       />
     </div>
   );
