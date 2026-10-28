@@ -228,12 +228,16 @@ p {
 /* Navigation Tabs */
 .nav-tabs {
   display: flex;
-  gap: 8px;
-  padding: 6px;
-  background: rgba(15, 21, 35, 0.7);
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: rgba(15, 21, 35, 0.75);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  margin-bottom: 28px;
+  width: fit-content;
+  margin: 0 auto 28px;
+  max-width: 100%;
 }
 
 .tab-btn {
