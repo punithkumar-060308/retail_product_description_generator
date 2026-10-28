@@ -166,3 +166,30 @@ def test_feedback_submission_and_rubric():
     records = list_response.json()
     assert len(records) >= 1
     assert records[0]["product_name"] == "AuraWave Headphones"
+
+
+def test_feedback_uses_mongodb_when_configured(monkeypatch):
+    from app.api import routes
+
+    saved_records = []
+    monkeypatch.setattr(routes, "is_mongo_configured", lambda: True)
+    monkeypatch.setattr(routes, "mongo_save_feedback", lambda record: saved_records.append(record))
+    monkeypatch.setattr(routes, "mongo_list_feedbacks", lambda: saved_records)
+
+    response = client.post(
+        "/feedback",
+        json={
+            "product_name": "Mongo Headphones",
+            "tone": "Friendly",
+            "rating_factual_accuracy": 5,
+            "rating_relevance": 4,
+            "rating_creativity": 4,
+            "rating_readability": 5,
+            "rating_seo_quality": 4,
+            "rating_tone_consistency": 5,
+            "generation_mode": "grounded-fallback",
+        },
+    )
+
+    assert response.status_code == 200
+    assert client.get("/feedback").json()[0]["product_name"] == "Mongo Headphones"
