@@ -4,6 +4,7 @@ Tests registration, validation, Argon2 hashing, JWT login, authentication, and p
 """
 
 import pytest
+from datetime import datetime
 from fastapi.testclient import TestClient
 from app.main import app
 from app.db.database import SessionLocal
@@ -224,3 +225,60 @@ def test_protected_profile_endpoint():
     assert updated_data["shop_name"] == "Tech Superstore"
     assert updated_data["city"] == "Hyderabad"
     assert updated_data["preferred_tone"] == "Premium"
+
+
+def test_mongodb_authentication_and_profile_update(monkeypatch):
+    from app.api import auth_routes
+    from app.services import auth_service
+
+    user_store = {}
+
+    def find_by_email(email):
+        return user_store.get(email)
+
+    def create_user(user_data):
+        user = {**user_data, "id": 101}
+        user["created_at"] = datetime.now()
+        user_store[user["email"]] = user
+        return user
+
+    def find_by_id(user_id):
+        return next((user for user in user_store.values() if user["id"] == user_id), None)
+
+    def update_user(user_id, updates):
+        user = find_by_id(user_id)
+        if user:
+            user.update(updates)
+        return user
+
+    monkeypatch.setattr(auth_routes, "is_mongo_configured", lambda: True)
+    monkeypatch.setattr(auth_routes, "mongo_find_user_by_email", find_by_email)
+    monkeypatch.setattr(auth_routes, "mongo_create_user", create_user)
+    monkeypatch.setattr(auth_routes, "mongo_update_user", update_user)
+    monkeypatch.setattr(auth_service, "is_mongo_configured", lambda: True)
+    monkeypatch.setattr(auth_service, "mongo_find_user_by_id", find_by_id)
+
+    payload = {
+        "full_name": "Mongo Retailer",
+        "email": "mongo.retailer@example.com",
+        "phone": "9876543210",
+        "shop_name": "Mongo Shop",
+        "business_type": "Retail shop",
+        "password": "SecurePassword123!",
+        "confirm_password": "SecurePassword123!",
+    }
+    registration = client.post("/auth/register", json=payload)
+    assert registration.status_code == 201
+    assert registration.json()["id"] == 101
+
+    login = client.post(
+        "/auth/login",
+        json={"email": payload["email"], "password": payload["password"]},
+    )
+    assert login.status_code == 200
+    token = login.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    profile = client.patch("/auth/me", json={"shop_name": "Updated Mongo Shop"}, headers=headers)
+    assert profile.status_code == 200
+    assert profile.json()["shop_name"] == "Updated Mongo Shop"

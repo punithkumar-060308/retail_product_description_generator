@@ -89,8 +89,8 @@ export default function App() {
           onClick={() => setActiveTab('bulk')}
         >
           <Layers size={16} />
-          Bulk Catalog Batch (50+ Items)
-          <span className="tab-badge">55 Demo Ready</span>
+          Bulk Catalog Batch
+          
         </button>
 
         <button

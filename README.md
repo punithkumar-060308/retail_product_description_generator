@@ -103,16 +103,18 @@ retail-product-description-generator/
    cd backend
    pip install -r requirements.txt
    ```
-2. *(Optional)* Configure your Google Gemini API key:
+2. Configure backend environment variables:
    - Copy `.env.example` to `.env`:
      ```bash
      cp .env.example .env
      ```
-   - Add your Gemini API key:
+   - To use MongoDB Atlas, set `MONGODB_URI` to your rotated Atlas connection string and `MONGODB_DB_NAME` to the database name. The URI is only read by the backend; do not commit `.env`.
+   - Optionally add your Google Gemini API key:
      ```env
      GEMINI_API_KEY=your_gemini_api_key_here
      GEMINI_MODEL=gemini-2.0-flash
      ```
+   - When `MONGODB_URI` is configured, MongoDB is used for retailer accounts and feedback. Without it, the app continues to use SQLite for accounts and in-memory feedback.
    > **Note:** If no API key is provided, the system runs automatically in **Grounded Fallback Mode** with 100% functionality and transparent provenance labeling.
 
 3. Launch the FastAPI server:

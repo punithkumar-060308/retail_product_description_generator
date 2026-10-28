@@ -8,10 +8,17 @@ Implements the endpoints specified in user_account_creation_implementation.md:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pymongo.errors import DuplicateKeyError, PyMongoError
 from sqlalchemy.orm import Session
 
 from ..db.database import get_db
 from ..db.models import User
+from ..db.mongo import (
+    is_mongo_configured,
+    mongo_create_user,
+    mongo_find_user_by_email,
+    mongo_update_user,
+)
 from ..schemas.user import (
     UserRegisterRequest,
     UserLoginRequest,
@@ -27,6 +34,13 @@ from ..services.auth_service import (
 )
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication & Retailer Profile"])
+
+
+def mongo_unavailable_error(exc: PyMongoError) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="MongoDB is unavailable; verify the database connection.",
+    )
 
 
 @auth_router.post(
@@ -47,7 +61,14 @@ def register_user(req: UserRegisterRequest, db: Session = Depends(get_db)):
     normalized_email = req.email.strip().lower()
 
     # 1. Check if email already registered
-    existing_user = db.query(User).filter(User.email == normalized_email).first()
+    try:
+        existing_user = (
+            mongo_find_user_by_email(normalized_email)
+            if is_mongo_configured()
+            else db.query(User).filter(User.email == normalized_email).first()
+        )
+    except PyMongoError as exc:
+        raise mongo_unavailable_error(exc) from exc
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -58,21 +79,35 @@ def register_user(req: UserRegisterRequest, db: Session = Depends(get_db)):
     hashed_pwd = hash_password(req.password)
 
     # 3. Create user entity
-    new_user = User(
-        full_name=req.full_name.strip(),
-        email=normalized_email,
-        phone=req.phone.strip(),
-        organization=req.organization.strip() if req.organization else None,
-        shop_name=req.shop_name.strip(),
-        business_type=req.business_type,
-        gst_number=req.gst_number,
-        address_line=req.address_line.strip() if req.address_line else None,
-        city=req.city.strip() if req.city else None,
-        state=req.state.strip() if req.state else None,
-        pincode=req.pincode,
-        password_hash=hashed_pwd,
-        preferred_tone=req.preferred_tone or "Friendly",
-    )
+    user_data = {
+        "full_name": req.full_name.strip(),
+        "email": normalized_email,
+        "phone": req.phone.strip(),
+        "organization": req.organization.strip() if req.organization else None,
+        "shop_name": req.shop_name.strip(),
+        "business_type": req.business_type,
+        "gst_number": req.gst_number,
+        "address_line": req.address_line.strip() if req.address_line else None,
+        "city": req.city.strip() if req.city else None,
+        "state": req.state.strip() if req.state else None,
+        "pincode": req.pincode,
+        "password_hash": hashed_pwd,
+        "preferred_tone": req.preferred_tone or "Friendly",
+    }
+
+    if is_mongo_configured():
+        try:
+            new_user = mongo_create_user(user_data)
+        except DuplicateKeyError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="An account with this email address is already registered.",
+            ) from exc
+        except PyMongoError as exc:
+            raise mongo_unavailable_error(exc) from exc
+        return UserResponse.model_validate(new_user)
+
+    new_user = User(**user_data)
 
     db.add(new_user)
     db.commit()
@@ -94,16 +129,35 @@ def login_user(req: UserLoginRequest, db: Session = Depends(get_db)):
     - Generates signed JWT bearer token
     """
     normalized_email = req.email.strip().lower()
-    user = db.query(User).filter(User.email == normalized_email).first()
+    try:
+        user = (
+            mongo_find_user_by_email(normalized_email)
+            if is_mongo_configured()
+            else db.query(User).filter(User.email == normalized_email).first()
+        )
+    except PyMongoError as exc:
+        raise mongo_unavailable_error(exc) from exc
 
-    if not user or not verify_password(req.password, user.password_hash):
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token = create_access_token(user_id=user.id, email=user.email)
+    password_hash = user.get("password_hash") if isinstance(user, dict) else user.password_hash
+    if not verify_password(req.password, password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if isinstance(user, dict):
+        user_id, email = user["id"], user["email"]
+    else:
+        user_id, email = user.id, user.email
+    access_token = create_access_token(user_id=user_id, email=email)
 
     return TokenResponse(
         access_token=access_token,
@@ -129,16 +183,33 @@ def get_profile(current_user: User = Depends(get_current_user)):
 )
 def update_profile(
     updates: UserUpdateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User | dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
     Update allowlisted profile and business details:
     - Modifies only permitted fields
-    - Persists changes to SQLite database
+    - Persists changes to the configured database
     - Returns updated profile
     """
     update_data = updates.model_dump(exclude_unset=True)
+
+    if is_mongo_configured():
+        updates_data = {
+            field: value.strip() if isinstance(value, str) else value
+            for field, value in update_data.items()
+            if value is not None
+        }
+        try:
+            updated_user = mongo_update_user(current_user["id"], updates_data)
+        except PyMongoError as exc:
+            raise mongo_unavailable_error(exc) from exc
+        if not updated_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Authenticated user account not found.",
+            )
+        return UserResponse.model_validate(updated_user)
 
     for field, value in update_data.items():
         if value is not None:

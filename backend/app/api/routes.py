@@ -10,7 +10,15 @@ from pathlib import Path
 from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Response
 from fastapi.responses import PlainTextResponse
+from pymongo.errors import PyMongoError
 
+from ..db.mongo import (
+    is_mongo_configured,
+    mongo_count_feedbacks,
+    mongo_list_feedbacks,
+    mongo_save_feedback,
+    ping_mongo,
+)
 from ..schemas.product import (
     ProductInput,
     ProductOutput,
@@ -52,14 +60,23 @@ def health_check():
     """Health check reporting provider status without exposing secrets."""
     has_key = generation_service.is_llm_configured()
     model = generation_service.model_name
-    return {
+    health = {
         "status": "healthy",
         "provider": "Google Gemini" if has_key else "Grounded Fallback Engine",
         "model": model if has_key else "deterministic-rule-grounded",
         "llm_configured": has_key,
         "sample_data_available": SAMPLE_CSV_PATH.exists(),
         "total_evaluations_recorded": len(FEEDBACK_STORE),
+        "database": {"provider": "MongoDB" if is_mongo_configured() else "SQLite"},
     }
+    if is_mongo_configured():
+        connection = ping_mongo()
+        health["database"]["connected"] = connection["connected"]
+        if connection["connected"]:
+            health["total_evaluations_recorded"] = mongo_count_feedbacks()
+        if not connection["connected"]:
+            health["status"] = "degraded"
+    return health
 
 
 @router.post("/generate", response_model=ProductOutput)
@@ -158,11 +175,28 @@ def submit_evaluation_feedback(feedback: FeedbackInput):
         overall_percentage=percentage,
     )
 
-    FEEDBACK_STORE.insert(0, record)
+    if is_mongo_configured():
+        try:
+            mongo_save_feedback(record.model_dump())
+        except PyMongoError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="MongoDB is unavailable; verify the database connection.",
+            ) from exc
+    else:
+        FEEDBACK_STORE.insert(0, record)
     return record
 
 
 @router.get("/feedback", response_model=List[FeedbackRecord])
 def list_evaluations():
     """List all recorded quality rubric reviews and evaluation scores."""
+    if is_mongo_configured():
+        try:
+            return mongo_list_feedbacks()
+        except PyMongoError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="MongoDB is unavailable; verify the database connection.",
+            ) from exc
     return FEEDBACK_STORE
