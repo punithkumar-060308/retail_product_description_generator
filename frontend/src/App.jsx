@@ -4,7 +4,7 @@ import Header from './components/Header';
 import SettingsModal from './components/SettingsModal';
 import SingleProductStudio from './components/SingleProductStudio';
 import BulkBatchProcessor from './components/BulkBatchProcessor';
-import QualityRubricView from './components/QualityRubricView';
+// import QualityRubricView from './components/QualityRubricView';
 import DocsArchitectureView from './components/DocsArchitectureView';
 import { fetchHealth } from './services/api';
 
@@ -53,17 +53,17 @@ export default function App() {
           <span className="tab-badge">55 Demo Ready</span>
         </button>
 
-        <button
+        {/* <button
           type="button"
           className={`tab-btn ${activeTab === 'rubric' ? 'active' : ''}`}
           onClick={() => setActiveTab('rubric')}
         >
-          <Award size={16} />
-          Quality Rubric &amp; Evaluation
+          {/* <Award size={16} />
+          Quality  &amp; Evaluation
           <span className="tab-badge" style={{ background: 'rgba(16,185,129,0.3)', color: '#a7f3d0' }}>
             85% Target
-          </span>
-        </button>
+          </span> 
+        </button> */}
 
         <button
           type="button"
@@ -81,7 +81,7 @@ export default function App() {
           <SingleProductStudio onFeedbackSubmitted={checkHealth} />
         )}
         {activeTab === 'bulk' && <BulkBatchProcessor />}
-        {activeTab === 'rubric' && <QualityRubricView />}
+        {/* {activeTab === 'rubric' && <QualityRubricView />} */}
         {activeTab === 'docs' && <DocsArchitectureView />}
       </main>
 
