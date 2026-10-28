@@ -1,7 +1,7 @@
 import React from 'react';
-import { Sparkles, Activity, Settings, ShieldCheck, Database } from 'lucide-react';
+import { Sparkles, Settings, Store, UserCheck, LogIn, UserPlus } from 'lucide-react';
 
-export default function Header({ health, onOpenSettings }) {
+export default function Header({ health, onOpenSettings, currentUser, onOpenAuth, onOpenProfile }) {
   const isHealthy = health?.status === 'healthy';
   const isLlm = health?.llm_configured;
 
@@ -13,16 +13,41 @@ export default function Header({ health, onOpenSettings }) {
         </div>
         <div className="brand-info">
           <h1>
-            CopyForge AI
-            <span className="badge-version">TCS Tech Day 2026</span>
+            Descripto AI
           </h1>
-          <p className="tagline">Grounded GenAI Retail Product Copy &amp; 50+ Catalog Batch Studio</p>
+          <p className="tagline">Describe Smarter, Sell Better</p>
         </div>
       </div>
 
       <div className="header-actions">
-        <div 
-          className="status-pill" 
+        {/* Retailer Account Badge / Login Trigger */}
+        {currentUser ? (
+          <button
+            type="button"
+            className="status-pill"
+            onClick={onOpenProfile}
+            title="View retailer profile and shop settings"
+            style={{ borderColor: 'rgba(99, 102, 241, 0.4)', background: 'rgba(99, 102, 241, 0.12)' }}
+          >
+            <Store size={15} color="var(--accent-primary)" />
+            <span style={{ color: '#fff', fontWeight: 600 }}>{currentUser.shop_name}</span>
+            <span style={{ fontSize: 11, color: '#a5b4fc' }}>({currentUser.full_name})</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={onOpenAuth}
+            style={{ borderRadius: 30, padding: '7px 16px', fontSize: 13 }}
+          >
+            <LogIn size={14} color="var(--accent-primary)" />
+            <span>Retailer Portal</span>
+          </button>
+        )}
+
+        {/* AI Provider & Server Health Pill */}
+        <div
+          className="status-pill"
           onClick={onOpenSettings}
           title="Click to view backend configuration &amp; model settings"
         >

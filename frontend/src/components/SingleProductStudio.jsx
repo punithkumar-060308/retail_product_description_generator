@@ -102,7 +102,7 @@ const TONES = [
   { id: 'Urgent / Persuasive', name: 'Urgent', desc: 'High-energy, action-driven & compelling' },
 ];
 
-export default function SingleProductStudio({ onFeedbackSubmitted }) {
+export default function SingleProductStudio({ onFeedbackSubmitted, currentUser }) {
   const [formData, setFormData] = useState({
     name: 'AuraWave Active Noise Cancelling Headphones',
     category: 'Electronics',
