@@ -155,7 +155,7 @@ personal details or a real password in test fixtures.
 
 ### Registration backend logic
 
-1.  Validate the request with Pydantic.
+1.  Validate the request with Pydantic....
 2.  Normalize the email (trim whitespace and lowercase it).
 3.  Confirm that the password and confirmation match.
 4.  Check whether the email is already registered.
