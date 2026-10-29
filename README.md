@@ -108,7 +108,8 @@ retail-product-description-generator/
      ```bash
      cp .env.example .env
      ```
-   - In `backend/.env`, set `MONGODB_URI` to your MongoDB Atlas connection string and `MONGODB_DB_NAME` to the database name. Keep `.env` local and never commit it. Ensure your Atlas network access rules allow connections from the machine running the backend.
+     On Windows PowerShell, use `Copy-Item .env.example .env`.
+   - In `backend/.env`, replace the `USERNAME`, `PASSWORD`, and `YOUR_CLUSTER` placeholders in `MONGODB_URI` with your MongoDB Atlas database user credentials and cluster hostname. Set `MONGODB_DB_NAME` to the database you want to use (the default is `retail_generator`). Keep `.env` local and never commit it. Ensure your Atlas network access rules allow connections from the machine running the backend.
    - Optionally add your Google Gemini API key:
      ```env
      GEMINI_API_KEY=your_gemini_api_key_here
@@ -124,6 +125,10 @@ retail-product-description-generator/
    ```
    Backend will be running at: `http://127.0.0.1:8000`  
    Interactive Swagger docs: `http://127.0.0.1:8000/docs`
+
+   Check `http://127.0.0.1:8000/health` and confirm `database.connected` is `true`. The response includes the active database name; new accounts are stored in that database's `users` collection (by default, `retail_generator.users`).
+
+   If the frontend is deployed, it sends requests to the backend URL configured by `VITE_API_BASE_URL` at build time. Set the backend's `MONGODB_URI` and `MONGODB_DB_NAME` in that backend host's environment settings as well; configuring a local `.env` does not change where a deployed frontend's registrations are stored.
 
 ---
 

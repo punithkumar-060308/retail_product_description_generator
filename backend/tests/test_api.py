@@ -18,7 +18,11 @@ client = TestClient(app)
 def fake_mongodb_feedback(monkeypatch):
     """Keep feedback API tests isolated from any configured MongoDB server."""
     records = []
-    monkeypatch.setattr(routes, "ping_mongo", lambda: {"connected": True})
+    monkeypatch.setattr(
+        routes,
+        "ping_mongo",
+        lambda: {"connected": True, "db_name": "retail_generator"},
+    )
     monkeypatch.setattr(routes, "mongo_count_feedbacks", lambda: len(records))
     monkeypatch.setattr(routes, "mongo_save_feedback", lambda record: records.insert(0, record))
     monkeypatch.setattr(routes, "mongo_list_feedbacks", lambda: records)
@@ -39,6 +43,7 @@ def test_health_endpoint():
     assert data["status"] == "healthy"
     assert "provider" in data
     assert "llm_configured" in data
+    assert data["database"]["name"] == "retail_generator"
 
 
 def test_single_product_valid_generation():

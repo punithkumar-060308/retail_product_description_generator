@@ -67,6 +67,7 @@ def health_check():
     connection = ping_mongo()
     health["database"]["connected"] = connection["connected"]
     if connection["connected"]:
+        health["database"]["name"] = connection["db_name"]
         try:
             health["total_evaluations_recorded"] = mongo_count_feedbacks()
         except PyMongoError:
