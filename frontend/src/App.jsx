@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Layers, Award, BookOpen } from 'lucide-react';
+import { Sparkles, Layers, BookOpen } from 'lucide-react';
 import Header from './components/Header';
 import SettingsModal from './components/SettingsModal';
 import AuthModal from './components/auth/AuthModal';
@@ -20,6 +20,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('single');
   const [health, setHealth] = useState(null);
   const [currentUser, setCurrentUser] = useState(getStoredUser());
+  const [theme, setTheme] = useState(() => (
+    window.localStorage.getItem('descripto-theme') === 'light' ? 'light' : 'dark'
+  ));
 
   // Modal dialog states
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -61,12 +64,19 @@ export default function App() {
     setCurrentUser(null);
   };
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem('descripto-theme', theme);
+  }, [theme]);
+
   return (
-    <div className="app-container">
+    <div className="app-container" data-theme={theme}>
       {/* Top Header */}
       <Header
         health={health}
         currentUser={currentUser}
+        theme={theme}
+        onToggleTheme={() => setTheme((currentTheme) => currentTheme === 'dark' ? 'light' : 'dark')}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
