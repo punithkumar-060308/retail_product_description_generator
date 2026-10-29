@@ -19,7 +19,7 @@ export default function DocsArchitectureView() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
         {/* Grounding Strategy */}
         <div className="glass-panel" style={{ padding: 22 }}>
-          <h3 style={{ fontSize: 16, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, color: '#818cf8' }}>
+          <h3 style={{ fontSize: 16, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--accent-primary)' }}>
             <ShieldCheck size={18} />
             1. Strict Fact-Grounding Guardrails
           </h3>
