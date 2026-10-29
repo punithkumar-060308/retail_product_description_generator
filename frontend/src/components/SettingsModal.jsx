@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CheckCircle, AlertTriangle, Cpu, Key, Server } from 'lucide-react';
+import { X, CheckCircle, AlertTriangle, Cpu, Key, Server, Database } from 'lucide-react';
 
 export default function SettingsModal({ isOpen, onClose, health, onRefreshHealth }) {
   if (!isOpen) return null;
@@ -35,6 +35,27 @@ export default function SettingsModal({ isOpen, onClose, health, onRefreshHealth
             </div>
             <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
               FastAPI backend running locally with CORS enabled, Pydantic validation, and CSV batch processing.
+            </p>
+          </div>
+
+          <div style={{ background: 'rgba(15, 23, 42, 0.6)', padding: 16, borderRadius: 10, border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <Database size={18} color="var(--accent-emerald)" />
+              <strong style={{ fontSize: 14 }}>Database Storage:</strong>
+              <span style={{ 
+                color: health?.database?.connected !== false ? 'var(--accent-emerald)' : 'var(--accent-rose)', 
+                fontWeight: 600, 
+                fontSize: 13 
+              }}>
+                {health?.database?.provider === 'MongoDB' 
+                  ? (health?.database?.connected ? 'MongoDB (Connected & Active)' : 'MongoDB (Connection Degraded)')
+                  : 'SQLite (Local)'}
+              </span>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              {health?.database?.provider === 'MongoDB'
+                ? 'All retailer accounts, shop profiles, and evaluations are securely stored in MongoDB.'
+                : 'Retailer accounts and evaluations are stored in local database.'}
             </p>
           </div>
 

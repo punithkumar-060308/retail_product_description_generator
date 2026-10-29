@@ -6,10 +6,16 @@ with automatic failover if MongoDB Atlas is not yet configured.
 
 import os
 import logging
+from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime
+from dotenv import load_dotenv
 from pymongo import MongoClient, ASCENDING, ReturnDocument
 from pymongo.errors import PyMongoError
+
+# Load environment variables from .env
+env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 logger = logging.getLogger("mongo_db")
 
@@ -80,6 +86,47 @@ def ping_mongo() -> Dict[str, Any]:
         return {"connected": False, "reason": "MongoDB is unavailable; check the URI, network access, and credentials."}
 
 
+def sync_sqlite_users_to_mongo():
+    """Migrates any existing SQLite users to MongoDB if they aren't already present."""
+    try:
+        from .database import SessionLocal
+        from .models import User as SqlUser
+        db = get_mongo_db()
+        if db is None:
+            return
+
+        session = SessionLocal()
+        try:
+            sql_users = session.query(SqlUser).all()
+            for u in sql_users:
+                norm_email = u.email.strip().lower()
+                existing = db.users.find_one({"email": norm_email})
+                if not existing:
+                    user_data = {
+                        "id": u.id,
+                        "full_name": u.full_name,
+                        "email": norm_email,
+                        "phone": u.phone,
+                        "organization": u.organization,
+                        "shop_name": u.shop_name,
+                        "business_type": u.business_type,
+                        "gst_number": u.gst_number,
+                        "address_line": u.address_line,
+                        "city": u.city,
+                        "state": u.state,
+                        "pincode": u.pincode,
+                        "password_hash": u.password_hash,
+                        "preferred_tone": u.preferred_tone or "Friendly",
+                        "created_at": u.created_at or datetime.utcnow(),
+                    }
+                    db.users.insert_one(user_data)
+                    logger.info("Migrated SQLite user '%s' (id: %d) to MongoDB.", norm_email, u.id)
+        finally:
+            session.close()
+    except Exception as e:
+        logger.warning("Could not sync SQLite users to MongoDB: %s", e)
+
+
 def init_mongo_indexes():
     """Ensures unique and search indexes exist in MongoDB Atlas collections."""
     db = get_mongo_db()
@@ -89,6 +136,9 @@ def init_mongo_indexes():
     db.users.create_index([("email", ASCENDING)], unique=True)
     db.users.create_index([("id", ASCENDING)], unique=True)
     db.feedbacks.create_index([("saved_at", ASCENDING)])
+
+    # Sync any pre-existing users to MongoDB
+    sync_sqlite_users_to_mongo()
 
     highest_user = db.users.find_one(sort=[("id", -1)], projection={"id": 1})
     highest_id = highest_user.get("id", 0) if highest_user else 0
@@ -159,7 +209,9 @@ def mongo_update_user(user_id: int, updates: Dict[str, Any]) -> Optional[Dict[st
     if db is None:
         raise RuntimeError("MongoDB is not configured.")
 
-    db.users.update_one({"id": int(user_id)}, {"$set": updates})
+    updates_to_apply = dict(updates)
+    updates_to_apply["updated_at"] = datetime.utcnow()
+    db.users.update_one({"id": int(user_id)}, {"$set": updates_to_apply})
     updated = db.users.find_one({"id": int(user_id)})
     if updated:
         updated.pop("_id", None)

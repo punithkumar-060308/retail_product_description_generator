@@ -13,7 +13,8 @@ import {
   CheckCircle, 
   AlertCircle,
   Calendar,
-  Sparkles
+  Sparkles,
+  Database
 } from 'lucide-react';
 import { updateUserProfile, setStoredUser, clearStoredAuth, getStoredToken } from '../../services/api';
 
@@ -98,8 +99,14 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onLo
             </div>
             <div>
               <h2 style={{ fontSize: 19 }}>{user.shop_name}</h2>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                {user.business_type} • Retailer ID: #{user.id}
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                <span>{user.business_type}</span>
+                <span>•</span>
+                <span>Retailer ID: #{user.id}</span>
+                <span>•</span>
+                <span style={{ color: 'var(--accent-emerald)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Database size={12} /> MongoDB
+                </span>
               </p>
             </div>
           </div>

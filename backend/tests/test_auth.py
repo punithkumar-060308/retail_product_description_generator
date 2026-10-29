@@ -15,24 +15,30 @@ client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def cleanup_test_user():
-    """Ensure clean state before and after each test."""
-    db = SessionLocal()
-    db.query(User).filter(User.email.in_([
-        "test.retailer@example.com",
-        "duplicate.retailer@example.com",
-        "update.retailer@example.com",
-    ])).delete()
-    db.commit()
-    db.close()
+    """Ensure clean state before and after each test in both SQLite and MongoDB."""
+    def clean():
+        db = SessionLocal()
+        db.query(User).filter(User.email.in_([
+            "test.retailer@example.com",
+            "duplicate.retailer@example.com",
+            "update.retailer@example.com",
+        ])).delete()
+        db.commit()
+        db.close()
+
+        from app.db.mongo import is_mongo_configured, get_mongo_db
+        if is_mongo_configured():
+            mdb = get_mongo_db()
+            if mdb is not None:
+                mdb.users.delete_many({"email": {"$in": [
+                    "test.retailer@example.com",
+                    "duplicate.retailer@example.com",
+                    "update.retailer@example.com",
+                ]}})
+
+    clean()
     yield
-    db = SessionLocal()
-    db.query(User).filter(User.email.in_([
-        "test.retailer@example.com",
-        "duplicate.retailer@example.com",
-        "update.retailer@example.com",
-    ])).delete()
-    db.commit()
-    db.close()
+    clean()
 
 
 def test_register_valid_retailer():
@@ -62,13 +68,20 @@ def test_register_valid_retailer():
     assert "password" not in data
     assert "password_hash" not in data
 
-    # Verify directly in database that password_hash is an Argon2 hash
-    db = SessionLocal()
-    user_db = db.query(User).filter(User.email == "test.retailer@example.com").first()
-    assert user_db is not None
-    assert user_db.password_hash.startswith("$argon2")
-    assert "SecurePassword123!" not in user_db.password_hash
-    db.close()
+    # Verify directly in active database that password_hash is an Argon2 hash
+    from app.db.mongo import is_mongo_configured, mongo_find_user_by_email
+    if is_mongo_configured():
+        user_db = mongo_find_user_by_email("test.retailer@example.com")
+        assert user_db is not None
+        assert user_db["password_hash"].startswith("$argon2")
+        assert "SecurePassword123!" not in user_db["password_hash"]
+    else:
+        db = SessionLocal()
+        user_db = db.query(User).filter(User.email == "test.retailer@example.com").first()
+        assert user_db is not None
+        assert user_db.password_hash.startswith("$argon2")
+        assert "SecurePassword123!" not in user_db.password_hash
+        db.close()
 
 
 def test_reject_duplicate_email():

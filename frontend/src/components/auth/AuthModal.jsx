@@ -13,7 +13,9 @@ import {
   AlertCircle, 
   LogIn, 
   UserPlus, 
-  Zap 
+  Zap,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { registerUser, loginUser, setStoredToken, setStoredUser } from '../../services/api';
 
@@ -35,6 +37,11 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+
+  // Password visibility states
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Registration Form State
   const [registerData, setRegisterData] = useState({
@@ -266,14 +273,25 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               <label className="form-label">
                 <span>Password <span className="req">*</span></span>
               </label>
-              <input
-                type="password"
-                className="input-field"
-                placeholder="••••••••"
-                value={loginData.password}
-                onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                required
-              />
+              <div className="password-input-wrapper">
+                <input
+                  type={showLoginPassword ? 'text' : 'password'}
+                  className="input-field"
+                  placeholder="••••••••"
+                  value={loginData.password}
+                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowLoginPassword((prev) => !prev)}
+                  title={showLoginPassword ? 'Hide password' : 'View password'}
+                  aria-label={showLoginPassword ? 'Hide password' : 'View password'}
+                >
+                  {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <button
@@ -496,28 +514,50 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   <span>Password <span className="req">*</span></span>
                   <span className="label-hint">Min 8 characters</span>
                 </label>
-                <input
-                  type="password"
-                  className="input-field"
-                  placeholder="••••••••"
-                  value={registerData.password}
-                  onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                  required
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    type={showRegisterPassword ? 'text' : 'password'}
+                    className="input-field"
+                    placeholder="••••••••"
+                    value={registerData.password}
+                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowRegisterPassword((prev) => !prev)}
+                    title={showRegisterPassword ? 'Hide password' : 'View password'}
+                    aria-label={showRegisterPassword ? 'Hide password' : 'View password'}
+                  >
+                    {showRegisterPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
 
               <div className="form-group">
                 <label className="form-label">
                   <span>Confirm Password <span className="req">*</span></span>
                 </label>
-                <input
-                  type="password"
-                  className="input-field"
-                  placeholder="••••••••"
-                  value={registerData.confirm_password}
-                  onChange={(e) => setRegisterData({ ...registerData, confirm_password: e.target.value })}
-                  required
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    className="input-field"
+                    placeholder="••••••••"
+                    value={registerData.confirm_password}
+                    onChange={(e) => setRegisterData({ ...registerData, confirm_password: e.target.value })}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    title={showConfirmPassword ? 'Hide password' : 'View password'}
+                    aria-label={showConfirmPassword ? 'Hide password' : 'View password'}
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
             </div>
 
