@@ -949,7 +949,6 @@ p {
   color: #475569;
 }
 
-<<<<<<< HEAD
 /* Password Input Visibility Toggle */
 .password-input-wrapper {
   position: relative;
@@ -990,34 +989,49 @@ p {
   outline-offset: 1px;
 }
 
-=======
 /* Theme control */
 .theme-toggle {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 38px;
-  padding: 8px 13px;
-  border: 1px solid var(--border-color);
+  gap: 9px;
+  min-height: 40px;
+  padding: 5px 14px 5px 6px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 999px;
-  background: var(--bg-input);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.88), rgba(15, 23, 42, 0.94));
   color: var(--text-main);
   font: 600 12px var(--font-main);
   cursor: pointer;
-  transition: var(--transition-fast);
+  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   white-space: nowrap;
 }
 
 .theme-toggle:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
+  border-color: rgba(99, 102, 241, 0.55);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.16);
   transform: translateY(-1px);
 }
 
 .theme-toggle:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 3px;
+}
+
+.theme-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.16);
+  color: #a5b4fc;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.theme-toggle:hover .theme-toggle-icon {
+  background: rgba(99, 102, 241, 0.25);
+  color: #c4b5fd;
 }
 
 .account-shop-name {
@@ -1049,6 +1063,22 @@ p {
   --shadow-md: 0 8px 24px rgba(31, 41, 69, 0.09);
   --shadow-lg: 0 16px 40px rgba(31, 41, 69, 0.12);
   --shadow-card: 0 12px 32px rgba(31, 41, 69, 0.08);
+}
+
+:root[data-theme='light'] .theme-toggle {
+  background: linear-gradient(135deg, #ffffff, #f3f4fb);
+  border-color: rgba(31, 41, 69, 0.14);
+  color: var(--text-main);
+}
+
+:root[data-theme='light'] .theme-toggle-icon {
+  background: rgba(99, 102, 241, 0.1);
+  color: #5b52d6;
+}
+
+:root[data-theme='light'] .theme-toggle:hover .theme-toggle-icon {
+  background: rgba(99, 102, 241, 0.16);
+  color: #4f46e5;
 }
 
 :root[data-theme='light'] body {
@@ -1260,4 +1290,3 @@ p {
     padding: 18px;
   }
 }
->>>>>>> 7dd50f3142fa55c83221075ba63eaed8dfc691d8

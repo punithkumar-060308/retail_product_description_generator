@@ -61,11 +61,14 @@ export default function Header({ health, onOpenSettings, currentUser, onOpenAuth
           type="button"
           className="theme-toggle"
           onClick={onToggleTheme}
-          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'night'} mode`}
-          title={`Switch to ${theme === 'dark' ? 'light' : 'night'} mode`}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          aria-pressed={theme === 'light'}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
         >
-          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          <span>{theme === 'dark' ? 'Light mode' : 'Night mode'}</span>
+          <span className="theme-toggle-icon" aria-hidden="true">
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+          </span>
+          <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
         </button>
       </div>
     </header>
