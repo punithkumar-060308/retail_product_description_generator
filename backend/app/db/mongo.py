@@ -6,6 +6,7 @@ with automatic failover if MongoDB Atlas is not yet configured.
 
 import os
 import logging
+import sqlite3
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime
@@ -86,45 +87,44 @@ def ping_mongo() -> Dict[str, Any]:
         return {"connected": False, "reason": "MongoDB is unavailable; check the URI, network access, and credentials."}
 
 
-def sync_sqlite_users_to_mongo():
-    """Migrates any existing SQLite users to MongoDB if they aren't already present."""
-    try:
-        from .database import SessionLocal
-        from .models import User as SqlUser
-        db = get_mongo_db()
-        if db is None:
-            return
+def migrate_existing_sqlite_users_to_mongo():
+    """Import existing local accounts once; SQLite is never used for new app data."""
+    sqlite_path = Path(__file__).resolve().parent.parent.parent / "retail_generator.db"
 
-        session = SessionLocal()
-        try:
-            sql_users = session.query(SqlUser).all()
-            for u in sql_users:
-                norm_email = u.email.strip().lower()
-                existing = db.users.find_one({"email": norm_email})
-                if not existing:
-                    user_data = {
-                        "id": u.id,
-                        "full_name": u.full_name,
-                        "email": norm_email,
-                        "phone": u.phone,
-                        "organization": u.organization,
-                        "shop_name": u.shop_name,
-                        "business_type": u.business_type,
-                        "gst_number": u.gst_number,
-                        "address_line": u.address_line,
-                        "city": u.city,
-                        "state": u.state,
-                        "pincode": u.pincode,
-                        "password_hash": u.password_hash,
-                        "preferred_tone": u.preferred_tone or "Friendly",
-                        "created_at": u.created_at or datetime.utcnow(),
-                    }
-                    db.users.insert_one(user_data)
-                    logger.info("Migrated SQLite user '%s' (id: %d) to MongoDB.", norm_email, u.id)
-        finally:
-            session.close()
-    except Exception as e:
-        logger.warning("Could not sync SQLite users to MongoDB: %s", e)
+    if not sqlite_path.exists():
+        return
+
+    with sqlite3.connect(f"{sqlite_path.as_uri()}?mode=ro", uri=True) as connection:
+        connection.row_factory = sqlite3.Row
+        has_users_table = connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'users'"
+        ).fetchone()
+        if not has_users_table:
+            return
+        users = connection.execute(
+            """SELECT id, full_name, email, phone, organization, shop_name,
+                      business_type, gst_number, address_line, city, state,
+                      pincode, password_hash, preferred_tone, created_at
+               FROM users"""
+        ).fetchall()
+
+    db = get_mongo_db()
+    if db is None:
+        raise RuntimeError("MongoDB is not configured.")
+
+    for row in users:
+        user = dict(row)
+        normalized_email = user["email"].strip().lower()
+        if db.users.find_one({"email": normalized_email}):
+            continue
+        created_at = user["created_at"]
+        user["created_at"] = (
+            datetime.fromisoformat(created_at) if created_at else datetime.utcnow()
+        )
+        user["email"] = normalized_email
+        user["preferred_tone"] = user["preferred_tone"] or "Friendly"
+        db.users.insert_one(user)
+        logger.info("Migrated existing local account id %d to MongoDB.", user["id"])
 
 
 def init_mongo_indexes():
@@ -137,8 +137,7 @@ def init_mongo_indexes():
     db.users.create_index([("id", ASCENDING)], unique=True)
     db.feedbacks.create_index([("saved_at", ASCENDING)])
 
-    # Sync any pre-existing users to MongoDB
-    sync_sqlite_users_to_mongo()
+    migrate_existing_sqlite_users_to_mongo()
 
     highest_user = db.users.find_one(sort=[("id", -1)], projection={"id": 1})
     highest_id = highest_user.get("id", 0) if highest_user else 0

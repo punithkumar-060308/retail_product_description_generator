@@ -8,10 +8,20 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
+from app.api import routes
 from app.schemas.product import ProductInput
 from app.services.generation import generation_service
 
 client = TestClient(app)
+
+@pytest.fixture(autouse=True)
+def fake_mongodb_feedback(monkeypatch):
+    """Keep feedback API tests isolated from any configured MongoDB server."""
+    records = []
+    monkeypatch.setattr(routes, "ping_mongo", lambda: {"connected": True})
+    monkeypatch.setattr(routes, "mongo_count_feedbacks", lambda: len(records))
+    monkeypatch.setattr(routes, "mongo_save_feedback", lambda record: records.insert(0, record))
+    monkeypatch.setattr(routes, "mongo_list_feedbacks", lambda: records)
 
 
 def test_root_endpoint():
@@ -172,7 +182,6 @@ def test_feedback_uses_mongodb_when_configured(monkeypatch):
     from app.api import routes
 
     saved_records = []
-    monkeypatch.setattr(routes, "is_mongo_configured", lambda: True)
     monkeypatch.setattr(routes, "mongo_save_feedback", lambda record: saved_records.append(record))
     monkeypatch.setattr(routes, "mongo_list_feedbacks", lambda: saved_records)
 

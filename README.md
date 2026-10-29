@@ -108,13 +108,14 @@ retail-product-description-generator/
      ```bash
      cp .env.example .env
      ```
-   - To use MongoDB Atlas, set `MONGODB_URI` to your rotated Atlas connection string and `MONGODB_DB_NAME` to the database name. The URI is only read by the backend; do not commit `.env`.
+   - In `backend/.env`, set `MONGODB_URI` to your MongoDB Atlas connection string and `MONGODB_DB_NAME` to the database name. Keep `.env` local and never commit it. Ensure your Atlas network access rules allow connections from the machine running the backend.
    - Optionally add your Google Gemini API key:
      ```env
      GEMINI_API_KEY=your_gemini_api_key_here
      GEMINI_MODEL=gemini-2.0-flash
      ```
-   - When `MONGODB_URI` is configured, MongoDB is used for retailer accounts and feedback. Without it, the app continues to use SQLite for accounts and in-memory feedback.
+   - MongoDB is required for retailer accounts and evaluation feedback; the backend will not start without a working `MONGODB_URI`.
+   - Existing accounts in `backend/retail_generator.db` are imported into MongoDB during startup. The legacy SQLite database is only read for this one-time migration; all new and updated data is stored in MongoDB.
    > **Note:** If no API key is provided, the system runs automatically in **Grounded Fallback Mode** with 100% functionality and transparent provenance labeling.
 
 3. Launch the FastAPI server:

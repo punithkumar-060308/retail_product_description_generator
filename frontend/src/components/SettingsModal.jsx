@@ -47,15 +47,11 @@ export default function SettingsModal({ isOpen, onClose, health, onRefreshHealth
                 fontWeight: 600, 
                 fontSize: 13 
               }}>
-                {health?.database?.provider === 'MongoDB' 
-                  ? (health?.database?.connected ? 'MongoDB (Connected & Active)' : 'MongoDB (Connection Degraded)')
-                  : 'SQLite (Local)'}
+                {health?.database?.connected ? 'MongoDB (Connected & Active)' : 'MongoDB (Connection Degraded)'}
               </span>
             </div>
             <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-              {health?.database?.provider === 'MongoDB'
-                ? 'All retailer accounts, shop profiles, and evaluations are securely stored in MongoDB.'
-                : 'Retailer accounts and evaluations are stored in local database.'}
+              All retailer accounts, shop profiles, and evaluations are stored in MongoDB.
             </p>
           </div>
 

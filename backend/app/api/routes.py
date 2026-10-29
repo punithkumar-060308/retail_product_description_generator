@@ -3,17 +3,15 @@ FastAPI REST API routes for Retail Product Description Generator.
 Provides single generation, batch CSV generation, export, feedback recording, and health checks.
 """
 
-import os
 import uuid
 import datetime
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Response
 from fastapi.responses import PlainTextResponse
 from pymongo.errors import PyMongoError
 
 from ..db.mongo import (
-    is_mongo_configured,
     mongo_count_feedbacks,
     mongo_list_feedbacks,
     mongo_save_feedback,
@@ -30,9 +28,6 @@ from ..services.generation import generation_service
 from ..services.csv_service import csv_service
 
 router = APIRouter()
-
-# In-memory feedback store (persisted in session)
-FEEDBACK_STORE: List[FeedbackRecord] = []
 
 SAMPLE_CSV_PATH = Path(__file__).resolve().parent.parent.parent.parent / "data" / "sample_products.csv"
 
@@ -66,16 +61,18 @@ def health_check():
         "model": model if has_key else "deterministic-rule-grounded",
         "llm_configured": has_key,
         "sample_data_available": SAMPLE_CSV_PATH.exists(),
-        "total_evaluations_recorded": len(FEEDBACK_STORE),
-        "database": {"provider": "MongoDB" if is_mongo_configured() else "SQLite"},
+        "total_evaluations_recorded": 0,
+        "database": {"provider": "MongoDB"},
     }
-    if is_mongo_configured():
-        connection = ping_mongo()
-        health["database"]["connected"] = connection["connected"]
-        if connection["connected"]:
+    connection = ping_mongo()
+    health["database"]["connected"] = connection["connected"]
+    if connection["connected"]:
+        try:
             health["total_evaluations_recorded"] = mongo_count_feedbacks()
-        if not connection["connected"]:
+        except PyMongoError:
             health["status"] = "degraded"
+    else:
+        health["status"] = "degraded"
     return health
 
 
@@ -175,28 +172,23 @@ def submit_evaluation_feedback(feedback: FeedbackInput):
         overall_percentage=percentage,
     )
 
-    if is_mongo_configured():
-        try:
-            mongo_save_feedback(record.model_dump())
-        except PyMongoError as exc:
-            raise HTTPException(
-                status_code=503,
-                detail="MongoDB is unavailable; verify the database connection.",
-            ) from exc
-    else:
-        FEEDBACK_STORE.insert(0, record)
+    try:
+        mongo_save_feedback(record.model_dump())
+    except PyMongoError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="MongoDB is unavailable; verify the database connection.",
+        ) from exc
     return record
 
 
 @router.get("/feedback", response_model=List[FeedbackRecord])
 def list_evaluations():
     """List all recorded quality rubric reviews and evaluation scores."""
-    if is_mongo_configured():
-        try:
-            return mongo_list_feedbacks()
-        except PyMongoError as exc:
-            raise HTTPException(
-                status_code=503,
-                detail="MongoDB is unavailable; verify the database connection.",
-            ) from exc
-    return FEEDBACK_STORE
+    try:
+        return mongo_list_feedbacks()
+    except PyMongoError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="MongoDB is unavailable; verify the database connection.",
+        ) from exc

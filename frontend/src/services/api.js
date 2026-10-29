@@ -3,7 +3,8 @@
  * Includes Product Generation, Catalog Batch, Quality Feedback, and Retailer Authentication endpoints.
  */
 
-const API_BASE_URL = 'https://retail-product-description-generator.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+  || (import.meta.env.DEV ? 'http://127.0.0.1:8000' : 'https://retail-product-description-generator.onrender.com');
 
 export async function fetchHealth() {
   try {

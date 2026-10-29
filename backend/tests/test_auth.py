@@ -7,38 +7,47 @@ import pytest
 from datetime import datetime
 from fastapi.testclient import TestClient
 from app.main import app
-from app.db.database import SessionLocal
-from app.db.models import User
+from app.api import auth_routes
+from app.services import auth_service
 
 client = TestClient(app)
+USER_STORE = {}
+NEXT_USER_ID = 1
 
 
 @pytest.fixture(autouse=True)
-def cleanup_test_user():
-    """Ensure clean state before and after each test in both SQLite and MongoDB."""
-    def clean():
-        db = SessionLocal()
-        db.query(User).filter(User.email.in_([
-            "test.retailer@example.com",
-            "duplicate.retailer@example.com",
-            "update.retailer@example.com",
-        ])).delete()
-        db.commit()
-        db.close()
+def fake_mongodb(monkeypatch):
+    """Keep account endpoint tests isolated from any configured MongoDB server."""
+    global NEXT_USER_ID
+    USER_STORE.clear()
+    NEXT_USER_ID = 1
 
-        from app.db.mongo import is_mongo_configured, get_mongo_db
-        if is_mongo_configured():
-            mdb = get_mongo_db()
-            if mdb is not None:
-                mdb.users.delete_many({"email": {"$in": [
-                    "test.retailer@example.com",
-                    "duplicate.retailer@example.com",
-                    "update.retailer@example.com",
-                ]}})
+    def find_by_email(email):
+        return USER_STORE.get(email.strip().lower())
 
-    clean()
+    def find_by_id(user_id):
+        return next((user for user in USER_STORE.values() if user["id"] == user_id), None)
+
+    def create_user(user_data):
+        global NEXT_USER_ID
+        user = {**user_data, "id": NEXT_USER_ID, "created_at": datetime.now()}
+        NEXT_USER_ID += 1
+        USER_STORE[user["email"]] = user
+        return user
+
+    def update_user(user_id, updates):
+        user = find_by_id(user_id)
+        if user:
+            user.update(updates)
+            user["updated_at"] = datetime.now()
+        return user
+
+    monkeypatch.setattr(auth_routes, "mongo_find_user_by_email", find_by_email)
+    monkeypatch.setattr(auth_routes, "mongo_create_user", create_user)
+    monkeypatch.setattr(auth_routes, "mongo_update_user", update_user)
+    monkeypatch.setattr(auth_service, "mongo_find_user_by_id", find_by_id)
     yield
-    clean()
+    USER_STORE.clear()
 
 
 def test_register_valid_retailer():
@@ -68,20 +77,9 @@ def test_register_valid_retailer():
     assert "password" not in data
     assert "password_hash" not in data
 
-    # Verify directly in active database that password_hash is an Argon2 hash
-    from app.db.mongo import is_mongo_configured, mongo_find_user_by_email
-    if is_mongo_configured():
-        user_db = mongo_find_user_by_email("test.retailer@example.com")
-        assert user_db is not None
-        assert user_db["password_hash"].startswith("$argon2")
-        assert "SecurePassword123!" not in user_db["password_hash"]
-    else:
-        db = SessionLocal()
-        user_db = db.query(User).filter(User.email == "test.retailer@example.com").first()
-        assert user_db is not None
-        assert user_db.password_hash.startswith("$argon2")
-        assert "SecurePassword123!" not in user_db.password_hash
-        db.close()
+    user_db = USER_STORE["test.retailer@example.com"]
+    assert user_db["password_hash"].startswith("$argon2")
+    assert "SecurePassword123!" not in user_db["password_hash"]
 
 
 def test_reject_duplicate_email():
@@ -264,11 +262,9 @@ def test_mongodb_authentication_and_profile_update(monkeypatch):
             user.update(updates)
         return user
 
-    monkeypatch.setattr(auth_routes, "is_mongo_configured", lambda: True)
     monkeypatch.setattr(auth_routes, "mongo_find_user_by_email", find_by_email)
     monkeypatch.setattr(auth_routes, "mongo_create_user", create_user)
     monkeypatch.setattr(auth_routes, "mongo_update_user", update_user)
-    monkeypatch.setattr(auth_service, "is_mongo_configured", lambda: True)
     monkeypatch.setattr(auth_service, "mongo_find_user_by_id", find_by_id)
 
     payload = {

@@ -1,5 +1,3 @@
-from .database import Base, engine, SessionLocal, get_db
-from .models import User
 from .mongo import (
     is_mongo_configured,
     get_mongo_client,
@@ -16,11 +14,6 @@ from .mongo import (
 )
 
 __all__ = [
-    "Base",
-    "engine",
-    "SessionLocal",
-    "get_db",
-    "User",
     "is_mongo_configured",
     "get_mongo_client",
     "get_mongo_db",

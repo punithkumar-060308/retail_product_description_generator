@@ -12,11 +12,8 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pymongo.errors import PyMongoError
-from sqlalchemy.orm import Session
 
-from ..db.database import get_db
-from ..db.models import User
-from ..db.mongo import is_mongo_configured, mongo_find_user_by_id
+from ..db.mongo import mongo_find_user_by_id
 
 # Configuration from environment variables
 JWT_SECRET = os.getenv("JWT_SECRET", "copilot_retail_super_secure_jwt_secret_key_2026_at_least_32_bytes")
@@ -82,8 +79,7 @@ def decode_access_token(token: str) -> dict:
 
 def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    db: Session = Depends(get_db),
-) -> User | dict[str, Any]:
+) -> dict[str, Any]:
     """
     FastAPI dependency to authenticate requests via Bearer JWT token.
     Returns the current User object or raises HTTP 401.
@@ -107,10 +103,7 @@ def get_current_user(
         )
 
     try:
-        if is_mongo_configured():
-            user = mongo_find_user_by_id(int(user_id))
-        else:
-            user = db.query(User).filter(User.id == int(user_id)).first()
+        user = mongo_find_user_by_id(int(user_id))
     except PyMongoError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
