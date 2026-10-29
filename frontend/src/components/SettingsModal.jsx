@@ -54,17 +54,6 @@ export default function SettingsModal({ isOpen, onClose, health, onRefreshHealth
               )}
             </p>
           </div>
-
-          <div style={{ background: 'rgba(99, 102, 241, 0.08)', padding: 14, borderRadius: 10, border: '1px dashed rgba(99, 102, 241, 0.3)' }}>
-            <h4 style={{ fontSize: 13, color: '#a5b4fc', marginBottom: 6 }}>
-              How to configure live Gemini API Key:
-            </h4>
-            <ol style={{ fontSize: 12, color: 'var(--text-muted)', paddingLeft: 18, lineHeight: 1.6 }}>
-              <li>Get a free Gemini API key from <a href="https://aistudio.google.com" target="_blank" rel="noreferrer" style={{ color: '#818cf8' }}>Google AI Studio</a>.</li>
-              <li>Create a <code>backend/.env</code> file with <code>GEMINI_API_KEY=your_key_here</code>.</li>
-              <li>Restart the FastAPI backend. Keys are stored strictly on the backend and never exposed to the frontend.</li>
-            </ol>
-          </div>
         </div>
 
         <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
