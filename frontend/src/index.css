@@ -949,6 +949,48 @@ p {
   color: #475569;
 }
 
+<<<<<<< HEAD
+/* Password Input Visibility Toggle */
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .input-field {
+  padding-right: 42px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.password-toggle-btn:hover {
+  color: var(--accent-primary);
+  background-color: rgba(99, 102, 241, 0.1);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.password-toggle-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 1px;
+}
+
+=======
 /* Theme control */
 .theme-toggle {
   display: inline-flex;
@@ -1218,3 +1260,4 @@ p {
     padding: 18px;
   }
 }
+>>>>>>> 7dd50f3142fa55c83221075ba63eaed8dfc691d8

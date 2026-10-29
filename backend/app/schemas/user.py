@@ -165,8 +165,9 @@ class UserResponse(BaseModel):
     pincode: Optional[str] = None
     preferred_tone: Optional[str] = "Friendly"
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="ignore")
 
 
 class TokenResponse(BaseModel):
